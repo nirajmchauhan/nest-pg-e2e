@@ -2,8 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import { DataType, newDb } from 'pg-mem';
 import * as request from 'supertest';
-import { getConnectionToken, getRepositoryToken, TypeOrmConnectionFactory } from '@nestjs/typeorm';
-import { Connection, Repository } from 'typeorm';
+import { TypeOrmConnectionFactory } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { AppModule } from '../src/app.module';
 import { Photo } from '../src/photo/photo.entity';
 
@@ -31,21 +31,47 @@ describe('PhotoController (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
-      .overrideProvider(getConnectionToken())
+      .overrideProvider('DATABASE_CONNECTION')
       .useValue(connection)
       .compile();
 
     app = moduleFixture.createNestApplication();
-    repository = moduleFixture.get(getRepositoryToken(Photo));
 
     await app.init();
+    repository = app.get<Repository<Photo>>('PHOTO_REPOSITORY');
   });
 
   afterEach(async () => {
     await repository.query('DELETE from photo;');
   });
 
-  it('/ (GET)', () => {
-    return request(app.getHttpServer()).get('/photo').expect(200).expect([]);
+  it('/ (GET) records', async () => {
+    await repository.save({
+      name: '123',
+      description: 'test',
+      filename: 'test',
+      views: 10,
+      data: {
+        key: 'value',
+      },
+      isPublished: true,
+    });
+    return request(app.getHttpServer())
+      .get('/photo')
+      .expect(200)
+      .expect((response: Response) => {
+        expect(response.body).toHaveLength(1);
+        expect(response.body).toEqual([
+          {
+            id: 1,
+            name: '123',
+            description: 'test',
+            filename: 'test',
+            views: 10,
+            data: { key: 'value' },
+            isPublished: true,
+          },
+        ]);
+      });
   });
 });

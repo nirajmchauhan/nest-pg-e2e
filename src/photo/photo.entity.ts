@@ -17,6 +17,9 @@ export class Photo {
   @Column('int')
   views: number;
 
+  @Column('jsonb')
+  data: Record<string, string>;
+
   @Column()
   isPublished: boolean;
 }
