@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import { DataType, newDb } from 'pg-mem';
 import * as request from 'supertest';
-import { getRepositoryToken, TypeOrmConnectionFactory } from '@nestjs/typeorm';
+import { getConnectionToken, getRepositoryToken, TypeOrmConnectionFactory } from '@nestjs/typeorm';
 import { Connection, Repository } from 'typeorm';
 import { AppModule } from '../src/app.module';
 import { Photo } from '../src/photo/photo.entity';
@@ -31,7 +31,7 @@ describe('PhotoController (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
-      .overrideProvider(Connection)
+      .overrideProvider(getConnectionToken())
       .useValue(connection)
       .compile();
 
